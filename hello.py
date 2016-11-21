@@ -1,13 +1,22 @@
 from flask import Flask, render_template
+from flask_script import Manager
+from flask_bootstrap import Bootstrap
 
 app = Flask(__name__)
 
-
-@app.route('/comments')
-def comments():
-    comments = ['comment 1', 'comment 2', 'comment 3']
-    return render_template('comments.html', comments=comments)
+manager = Manager(app)
+bootstrap = Bootstrap(app)
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+@app.route('/user/<name>')
+def user(name):
+    return render_template('user.html', name=name)
+
+
+if __name__ == '__main__':
+    manager.run()
