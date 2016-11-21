@@ -4,7 +4,6 @@ from flask_bootstrap import Bootstrap
 
 app = Flask(__name__)
 
-manager = Manager(app)
 bootstrap = Bootstrap(app)
 
 
@@ -19,4 +18,4 @@ def user(name):
 
 
 if __name__ == '__main__':
-    manager.run()
+    app.run(debug=True)
