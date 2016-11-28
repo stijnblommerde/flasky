@@ -1,6 +1,5 @@
-from flask import Flask, render_template, session, url_for, redirect, flash
+from flask import session, url_for, redirect
 from flask_script import Manager, Shell
-from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_wtf import FlaskForm
 from flask_sqlalchemy import SQLAlchemy
