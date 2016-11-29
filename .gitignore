@@ -2,3 +2,12 @@
 .idea
 .DS_Store
 .pyc
+tests/__pycache__/test_basics.cpython-35.pyc
+migrations/versions/__pycache__/
+migrations/__pycache__/env.cpython-35.pyc
+app/main/__pycache__/
+app/auth/__pycache__/
+app/__pycache__/
+__pycache__/config.cpython-35.pyc
+data-dev.sqlite
+data-test.sqlite
