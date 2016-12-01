@@ -15,4 +15,9 @@
     <a href="{{ url_for('auth.register') }}">register</a>
     Click here to register
 </p>
+<p>Forgot password?
+    <!--url_for points to [blueprint].[view function]-->
+    <a href="{{ url_for('auth.password_reset_request') }}">Reset</a>
+    Click here to reset password
+
 {% endblock %}

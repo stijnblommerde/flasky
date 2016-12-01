@@ -36,3 +36,34 @@ class RegistrationForm(FlaskForm):
     def validate_username(self, field):
         if User.query.filter_by(username=field.data).first():
             raise ValidationError('Username already exists')
+
+
+# TODO: old != new & old != confirm
+class UpdatePasswordForm(FlaskForm):
+    old_password = PasswordField('Old password', validators=[
+        DataRequired()])
+    new_password = PasswordField('New password', validators=[
+        DataRequired(), EqualTo('confirm_password', 'Passwords must match.')])
+    confirm_password = PasswordField('Confirm new password', validators=[
+        DataRequired()])
+    submit = SubmitField('Change password')
+
+
+class PasswordResetRequestForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired()])
+    submit = SubmitField('Request password reset')
+
+
+class ResetPasswordForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired()])
+    new_password = PasswordField('New password', validators=[
+        DataRequired(), EqualTo('confirm_password', 'Passwords must match.')])
+    confirm_password = PasswordField('Confirm new password', validators=[
+        DataRequired()])
+    submit = SubmitField('Change password')
+
+
+class ChangeEmailRequestForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired()])
+    new_email = StringField('New email', validators=[DataRequired()])
+    submit = SubmitField('Change email')

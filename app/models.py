@@ -22,9 +22,11 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
     email = db.Column(db.String(64), unique=True, index=True)
+    pending_email = db.Column(db.String(64), unique=True, index=True)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     password_hash = db.Column(db.String(128))
     confirmed = db.Column(db.Boolean(), default=False)
+
 
     @property
     def password(self):
@@ -56,6 +58,40 @@ class User(db.Model, UserMixin):
             return False
 
         self.confirmed = True
+        db.session.add(self)
+        return True
+
+    def generate_reset_password_token(self, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'reset_password': self.id})
+
+    def reset_password(self, token, password):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return False
+        if data.get('reset_password') != self.id:
+            return False
+        self.password = password
+        db.session.add(self)
+        return True
+
+    def generate_change_email_token(self, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'change_email': self.id})
+
+    def change_email(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return False
+        if data.get('change_email') != self.id:
+            return False
+        if len(self.pending_email) > 0:
+            self.email = self.pending_email
+            self.pending_email = ''
         db.session.add(self)
         return True
 
