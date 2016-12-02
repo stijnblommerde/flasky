@@ -155,9 +155,7 @@ def change_email_request():
     form = ChangeEmailRequestForm()
     if form.validate_on_submit():
         current_user.pending_email = form.new_email.data
-        db.session.add(current_user)
-        db.session.commit()
-        token = current_user.generate_change_email_token()
+        token = current_user.generate_change_email_token(form.new_email.data)
         send_email(current_app.config.get('MAIL_TO') or form.new_email.data,
                    'Change your email',
                    'auth/email/change_email',

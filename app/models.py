@@ -22,7 +22,6 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
     email = db.Column(db.String(64), unique=True, index=True)
-    pending_email = db.Column(db.String(64), unique=True, index=True)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     password_hash = db.Column(db.String(128))
     confirmed = db.Column(db.Boolean(), default=False)
@@ -35,10 +34,6 @@ class User(db.Model, UserMixin):
     @password.setter
     def password(self, password):
         self.password_hash = generate_password_hash(password)
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -77,9 +72,11 @@ class User(db.Model, UserMixin):
         db.session.add(self)
         return True
 
-    def generate_change_email_token(self, expiration=3600):
+    def generate_change_email_token(self, new_email, expiration=3600):
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'change_email': self.id})
+        # store both user id and new email in token
+        return s.dumps({'change_email': self.id,
+                        'new_email': new_email})
 
     def change_email(self, token):
         s = Serializer(current_app.config['SECRET_KEY'])
@@ -87,14 +84,21 @@ class User(db.Model, UserMixin):
             data = s.loads(token)
         except:
             return False
+        new_email = data.get('new_email')
         if data.get('change_email') != self.id:
             return False
-        if len(self.pending_email) > 0:
-            self.email = self.pending_email
-            self.pending_email = ''
+        if not new_email:
+            return False
+        if self.query.filter_by(email=new_email).first() is not None:
+            return False
+        self.email = new_email
         db.session.add(self)
         return True
 
     def __repr__(self):
         return '<User %r>' % self.username
 
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
