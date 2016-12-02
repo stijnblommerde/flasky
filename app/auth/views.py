@@ -5,7 +5,8 @@ from flask_login import login_required, login_user, logout_user, current_user
 from app import db
 from app.auth.forms import LoginForm, RegistrationForm, UpdatePasswordForm, \
     ResetPasswordForm, PasswordResetRequestForm, ChangeEmailRequestForm
-from app.models import User
+from app.decorators import admin_required, permission_required
+from app.models import User, Permission
 from . import auth
 from ..email import send_email
 
@@ -176,3 +177,4 @@ def change_email(token):
     else:
         flash('token is expired or invalid')
     return redirect(url_for('main.index'))
+
