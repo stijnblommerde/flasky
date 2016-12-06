@@ -14,12 +14,12 @@ class LoginForm(FlaskForm):
 
 
 class RegistrationForm(FlaskForm):
-    username = StringField('Username')
+    username = StringField('Username', validators=[
+        Regexp('^[A-Za-z]*@{1}[A-Za-z0-9_.]*$', 0,
+               'Usernames must have only letters, numbers dots or '
+               'underscores')]),
     email = StringField('Email', validators=[
-        DataRequired(), Length(1, 64),
-        Email(), Regexp('^[A-Za-z]*@{1}[A-Za-z0-9_.]*$', 0,
-                        'Usernames must have only letters, '
-                        'numbers dots or underscores')])
+        DataRequired(), Length(1, 64), Email()])
     password = PasswordField('Password', validators=[
         DataRequired(), EqualTo('confirm_password', 'Passwords must match.')])
     confirm_password = PasswordField('Confirm password',

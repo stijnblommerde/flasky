@@ -24,5 +24,19 @@
         Member since {{ moment(user.member_since).format('L') }}
         Last seen {{ moment(user.last_seen).fromNow() }}
     </p>
+    <!-- conditie: user bekijkt zijn eigen profiel-->
+    {% if user == current_user %}
+    <a class="btn btn-default" href="{{ url_for('main.edit_profile') }}">
+        Edit profile
+    </a>
+    {% endif %}
+    <!-- conditie: user bekijkt zijn eigen profiel-->
+    {% if user.is_administrator %}
+    <a class="btn btn-danger"
+       href="{{ url_for('main.edit_profile_admin', id=user.id) }}">
+        Edit profile as administrator
+    </a>
+    {% endif %}
+
 </div>
 {% endblock %}
