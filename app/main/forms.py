@@ -24,9 +24,9 @@ class EditProfileAdminForm(FlaskForm):
                                              Email()])
     username = StringField('Username', validators=[
         DataRequired(), Length(1, 64),
-        Regexp('^[A-Za-z]*@{1}[A-Za-z0-9_.]*$', 0, 'Usernames must have only '
-                                                   'letters, numbers dots or '
-                                                   'underscores')]),
+        Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0, 'Usernames must have only '
+                                              'letters, numbers dots or '
+                                              'underscores')])
     confirmed = BooleanField('Confirmed')
     role = SelectField('Role', coerce=int)
     name = StringField('Real name', validators=[Length(0, 64)])

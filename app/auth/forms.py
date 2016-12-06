@@ -7,6 +7,8 @@ from app.models import User
 
 
 class LoginForm(FlaskForm):
+    """ log user in
+    """
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password')
     remember_me = BooleanField()
@@ -14,10 +16,12 @@ class LoginForm(FlaskForm):
 
 
 class RegistrationForm(FlaskForm):
+    """ register user
+    """
     username = StringField('Username', validators=[
-        Regexp('^[A-Za-z]*@{1}[A-Za-z0-9_.]*$', 0,
+        Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0,
                'Usernames must have only letters, numbers dots or '
-               'underscores')]),
+               'underscores')])
     email = StringField('Email', validators=[
         DataRequired(), Length(1, 64), Email()])
     password = PasswordField('Password', validators=[
@@ -38,8 +42,13 @@ class RegistrationForm(FlaskForm):
             raise ValidationError('Username already exists')
 
 
-# TODO: old != new & old != confirm
+# TODO: write validator to check that user does not enter the same password
+# TODO: ... twice.
 class UpdatePasswordForm(FlaskForm):
+    """ replace the existing password with a new one. Password is used in
+    the authorization process.
+
+    """
     old_password = PasswordField('Old password', validators=[
         DataRequired()])
     new_password = PasswordField('New password', validators=[
@@ -50,11 +59,17 @@ class UpdatePasswordForm(FlaskForm):
 
 
 class PasswordResetRequestForm(FlaskForm):
+    """ Receive email to reset the password. Step 1 of 2 step process to reset
+    password.
+    """
     email = StringField('Email', validators=[DataRequired()])
     submit = SubmitField('Request password reset')
 
 
 class ResetPasswordForm(FlaskForm):
+    """ Fill out form to reset password. Step 2 of 2 step process to reset
+    password.
+    """
     email = StringField('Email', validators=[DataRequired()])
     new_password = PasswordField('New password', validators=[
         DataRequired(), EqualTo('confirm_password', 'Passwords must match.')])
@@ -64,6 +79,9 @@ class ResetPasswordForm(FlaskForm):
 
 
 class ChangeEmailRequestForm(FlaskForm):
+    """ replace the primary email address. Email address is used in
+    authorization process.
+    """
     email = StringField('Email', validators=[DataRequired()])
     new_email = StringField('New email', validators=[DataRequired()])
     submit = SubmitField('Change email')
