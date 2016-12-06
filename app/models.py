@@ -1,15 +1,13 @@
 import hashlib
 from datetime import datetime
-
-from flask import current_app
-from flask import request
-from flask_login import AnonymousUserMixin
-from flask_login import UserMixin
+from flask import current_app, request
+from flask_login import AnonymousUserMixin, UserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import login_manager
-from . import db
+from werkzeug.contrib.cache import SimpleCache
+from . import login_manager, db
+
+cache = SimpleCache()
 
 
 class Permission:
@@ -68,6 +66,7 @@ class User(db.Model, UserMixin):
     about_me = db.Column(db.Text())
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
+    avatar_hash = db.Column(db.String(32))
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -77,22 +76,37 @@ class User(db.Model, UserMixin):
             else:
                 self.role = Role.query.filter_by(default=True).first()
 
+        if self.email is not None and self.avatar_hash is None:
+            self.avatar_hash = hashlib.md5(
+            self.email.encode('utf-8')).hexdigest()
+
     @property
     def password(self):
         raise AttributeError('password is not a readable attribute')
 
     @password.setter
     def password(self, password):
+        """ we don't store the password directly, but we store its
+        hash
+        """
         self.password_hash = generate_password_hash(password)
 
     def verify_password(self, password):
+        """ login procedure verifies the hashed password
+        """
         return check_password_hash(self.password_hash, password)
 
     def generate_confirmation_token(self, expiration=3600):
+        """ for safety purposes we send a confirmation token to the user
+        to make sure that the owner confirms the account
+        """
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'confirm': self.id})
 
     def confirm(self, token):
+        """ login procedure requires user to confirm the registration by
+        email
+        """
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token)
@@ -107,10 +121,15 @@ class User(db.Model, UserMixin):
         return True
 
     def generate_reset_password_token(self, expiration=3600):
+        """ for safety purposes we send a token to the user to make sure
+        that a owner resets the password
+        """
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
         return s.dumps({'reset_password': self.id})
 
     def reset_password(self, token, password):
+        """ reset password
+        """
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token)
@@ -123,12 +142,16 @@ class User(db.Model, UserMixin):
         return True
 
     def generate_change_email_token(self, new_email, expiration=3600):
+        """ for safety purposes we send a token to the user to make sure
+        that a owner changes the email address
+        """
         s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        # store both user id and new email in token
         return s.dumps({'change_email': self.id,
                         'new_email': new_email})
 
     def change_email(self, token):
+        """ change email address of user
+        """
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token)
@@ -142,28 +165,43 @@ class User(db.Model, UserMixin):
         if self.query.filter_by(email=new_email).first() is not None:
             return False
         self.email = new_email
+        # avatar_hash is recalculated every time the user changes the email
+        # address
+        self.avatar_hash = hashlib.md5(
+            self.email.encode('utf-8')).hexdigest()
         db.session.add(self)
         return True
 
     def can(self, permissions):
-
+        """ system can verify user permissions
+        :return: returns true if user has given permissions
+        """
         # bitwise and (&) operation
         return self.role is not None and \
                (self.role.permissions & permissions) == permissions
 
     def is_administrator(self):
+        """ system can verify whether user is administrator
+        :return: returns true if user has administrator permissions
+        """
         return self.can(Permission.ADMINISTER)
 
     def ping(self):
+        """ update last time user has been logged in
+        """
         self.last_seen = datetime.utcnow()
         db.session.add(self)
 
     def gravatar(self, size=100, default='identicon', rating='g'):
+        """ build avatar for user profile
+        :return: url pointing to avatar at gravatar.com website
+        """
         if request.is_secure:
             url = 'https://secure.gravatar.com/avatar'
         else:
             url = 'http://www.gravatar.com/avatar'
-        hash = hashlib.md5(self.email.encode('utf-8')).hexdigest()
+        hash = self.avatar_hash or hashlib.md5(
+            self.email.encode('utf-8')).hexdigest()
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
             url=url, hash=hash, size=size, default=default, rating=rating)
 
@@ -172,6 +210,9 @@ class User(db.Model, UserMixin):
 
 
 class AnonymousUser(AnonymousUserMixin):
+    """ Anonymous User has not verified the account yet,
+    but is able to login and view a single page
+    """
     def can(self, permissions):
         return False
 
