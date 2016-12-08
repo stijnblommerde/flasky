@@ -20,8 +20,9 @@ def index():
     print(current_user)
     if current_user.can(Permission.WRITE_ARTICLES) and \
             form.validate_on_submit():
-        # you cannot use current_user directly
-        post = Post(body=form.pagedown.data,
+        # you cannot use current_user directly, since it is a wrapper
+        # extract the actual user with _get_current_object()
+        post = Post(body=form.body.data,
                     author=current_user._get_current_object())
         db.session.add(post)
         return redirect(url_for('.index'))

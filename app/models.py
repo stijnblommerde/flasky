@@ -1,8 +1,11 @@
 import hashlib
 from datetime import datetime
+
+import bleach
 from flask import current_app, request
 from flask_login import AnonymousUserMixin, UserMixin
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from markdown import markdown
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.contrib.cache import SimpleCache
 from . import login_manager, db
@@ -245,6 +248,7 @@ class AnonymousUser(AnonymousUserMixin):
         return False
 
 # store new behaviour of anonymous user in login-manager
+# AnonymousUser is hetzelfde als AnonymousUser()
 login_manager.anonymous_user = AnonymousUser
 
 
@@ -252,6 +256,7 @@ class Post(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text)
+    body_html = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
@@ -269,6 +274,18 @@ class Post(db.Model):
                      author=u)
             db.session.add(p)
             db.session.commit()
+
+    @staticmethod
+    def on_change_body(target, value, oldvalue, initiator):
+        print('enter on change body')
+        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blokquote', 'code',
+                        'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
+                        'h1', 'h2', 'h3', 'p']
+        target.body_html = bleach.linkify(bleach.clean(
+            markdown(value, output_format='html'),
+            tags=allowed_tags, strip=True))
+
+db.event.listen(Post.body, 'set', Post.on_change_body)
 
 
 @login_manager.user_loader
