@@ -5,8 +5,7 @@ from datetime import datetime
 from flask import flash
 from flask import render_template, session, redirect, url_for, current_app, \
     abort
-from flask_login import current_user
-from flask_login import login_required
+from flask_login import current_user, login_required
 
 from app.decorators import admin_required, permission_required
 from . import main
@@ -18,10 +17,11 @@ from ..models import User, Permission, Role, Post
 @main.route('/', methods=['GET', 'POST'])
 def index():
     form = PostForm()
+    print(current_user)
     if current_user.can(Permission.WRITE_ARTICLES) and \
             form.validate_on_submit():
         # you cannot use current_user directly
-        post = Post(body=form.body.data,
+        post = Post(body=form.pagedown.data,
                     author=current_user._get_current_object())
         db.session.add(post)
         return redirect(url_for('.index'))

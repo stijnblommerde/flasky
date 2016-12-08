@@ -244,6 +244,9 @@ class AnonymousUser(AnonymousUserMixin):
     def is_administrator(self):
         return False
 
+# store new behaviour of anonymous user in login-manager
+login_manager.anonymous_user = AnonymousUser
+
 
 class Post(db.Model):
     __tablename__ = 'posts'
@@ -266,6 +269,7 @@ class Post(db.Model):
                      author=u)
             db.session.add(p)
             db.session.commit()
+
 
 @login_manager.user_loader
 def load_user(user_id):
