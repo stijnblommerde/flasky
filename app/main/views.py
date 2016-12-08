@@ -17,7 +17,6 @@ from ..models import User, Permission, Role, Post
 @main.route('/', methods=['GET', 'POST'])
 def index():
     form = PostForm()
-    print(current_user)
     if current_user.can(Permission.WRITE_ARTICLES) and \
             form.validate_on_submit():
         # you cannot use current_user directly, since it is a wrapper
@@ -96,8 +95,26 @@ def edit_profile_admin(id):
     form.about_me.data = user.about_me
     return render_template('edit_profile.html', form=form, user=user)
 
+
 @main.route('/post/<int:id>')
 @login_required
 def post(id):
     post = Post.query.get_or_404(id)
     return render_template('post.html', posts=[post])
+
+
+@main.route('/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit(id):
+    post = Post.query.get_or_404(id)
+    if current_user != post.author and \
+        not current_user.can(Permission.ADMINISTER):
+        abort(403)
+    form = PostForm()
+    if form.validate_on_submit():
+        post.body = form.body.data
+        db.session.add(post)
+        flash('Post has been edited')
+        return redirect(url_for('.post', id=post.id))
+    form.body.data = post.body
+    return render_template('edit_post.html', form=form, posts=[post])

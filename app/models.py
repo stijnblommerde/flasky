@@ -277,7 +277,6 @@ class Post(db.Model):
 
     @staticmethod
     def on_change_body(target, value, oldvalue, initiator):
-        print('enter on change body')
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blokquote', 'code',
                         'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
                         'h1', 'h2', 'h3', 'p']
