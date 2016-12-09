@@ -1,0 +1,41 @@
+{% macro render_comment(comment) %}
+    <li>{{ comment }}</li>
+{% endmacro %}
+
+{% macro render_pagination(pagination, endpoint) %}
+<ul class=pagination>
+  <!--previous symbol-->
+  <li>
+    <a href="#" aria-label="Previous">
+      <span aria-hidden="true">&laquo;</span>
+    </a>
+  <li>
+  {% for page in pagination.iter_pages() %}
+    <!--produced page-->
+    {% if page %}
+      <!--active page -->
+      {% if page == pagination.page %}
+      <li class="active">
+        <a href="{{ url_for(endpoint, page=page) }}">{{ page }}</a>
+      </li>
+      <!--inactive pages-->
+      {% else %}
+      <li><a href="{{ url_for(endpoint, page=page) }}">{{ page }}</a></li>
+      {% endif %}
+    <!--skipped page-->
+    {% else %}
+    <li class="disabled">
+      <span>
+        <span aria-hidden="true">&hellip;</span>
+      </span>
+    </li>
+    {% endif %}
+  {% endfor %}
+  <!--next symbol-->
+  <li>
+    <a href="#" aria-label="Next">
+      <span aria-hidden="true">&raquo;</span>
+    </a>
+  </li>
+</ul>
+{% endmacro %}

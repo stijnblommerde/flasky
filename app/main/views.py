@@ -4,7 +4,7 @@ from datetime import datetime
 
 from flask import flash
 from flask import render_template, session, redirect, url_for, current_app, \
-    abort
+    abort, request
 from flask_login import current_user, login_required
 
 from app.decorators import admin_required, permission_required
@@ -25,8 +25,14 @@ def index():
                     author=current_user._get_current_object())
         db.session.add(post)
         return redirect(url_for('.index'))
-    posts = Post.query.order_by(Post.timestamp.desc()).all()
-    return render_template('index.html', form=form, posts=posts)
+
+    page = request.args.get('page', type=int, default=1)
+    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+        page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], error_out=False)
+    posts = pagination.items
+
+    return render_template('index.html', form=form, posts=posts,
+                           pagination=pagination)
 
 
 @main.route('/admin')
