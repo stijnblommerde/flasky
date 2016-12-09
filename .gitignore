@@ -1,13 +1,28 @@
-/env
+# hidden files
 .idea
 .DS_Store
 .pyc
-tests/__pycache__/test_basics.cpython-35.pyc
-migrations/versions/__pycache__/
-migrations/__pycache__/env.cpython-35.pyc
+
+# folders
+/env
+
+# cache
+__pycache__/
+app/__pycache__/
 app/main/__pycache__/
 app/auth/__pycache__/
-app/__pycache__/
-__pycache__/config.cpython-35.pyc
-data-dev.sqlite
-data-test.sqlite
+migrations/versions/__pycache__/
+
+# pyc
+*.pyc
+__pycache__/*.pyc
+app/*.pyc
+app/auth/*.pyc
+app/main/*.pyc
+migrations/*.pyc
+migrations/__pycache__/*.pyc
+migrations/versions/*.pyc
+tests/__pycache__/*.pyc
+
+# sqlite
+*.sqlite
