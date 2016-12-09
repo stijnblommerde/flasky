@@ -6,14 +6,7 @@
 # folders
 /env
 
-# cache
-__pycache__/
-app/__pycache__/
-app/main/__pycache__/
-app/auth/__pycache__/
-migrations/versions/__pycache__/
-
-# pyc
+# python byte code
 *.pyc
 __pycache__/*.pyc
 app/*.pyc
@@ -24,5 +17,12 @@ migrations/__pycache__/*.pyc
 migrations/versions/*.pyc
 tests/__pycache__/*.pyc
 
-# sqlite
+# python bytecode folders
+__pycache__/
+app/__pycache__/
+app/main/__pycache__/
+app/auth/__pycache__/
+migrations/versions/__pycache__/
+
+# database files
 *.sqlite
