@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
 
 {% block title %}Flasky{% endblock %}
 
@@ -19,4 +20,5 @@
 <ul class="posts">
     {% include('_posts.html') %}
 </ul>
+{{ macros.render_pagination(pagination, 'main.index') }}
 {% endblock %}
