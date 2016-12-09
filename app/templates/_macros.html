@@ -1,41 +1,40 @@
 {% macro render_comment(comment) %}
-    <li>{{ comment }}</li>
+	<li>{{ comment }}</li>
 {% endmacro %}
 
 {% macro render_pagination(pagination, endpoint) %}
 <ul class=pagination>
-  <!--previous symbol-->
-  <li>
-    <a href="#" aria-label="Previous">
-      <span aria-hidden="true">&laquo;</span>
-    </a>
-  <li>
-  {% for page in pagination.iter_pages() %}
-    <!--produced page-->
-    {% if page %}
-      <!--active page -->
-      {% if page == pagination.page %}
-      <li class="active">
-        <a href="{{ url_for(endpoint, page=page) }}">{{ page }}</a>
-      </li>
-      <!--inactive pages-->
-      {% else %}
-      <li><a href="{{ url_for(endpoint, page=page) }}">{{ page }}</a></li>
-      {% endif %}
-    <!--skipped page-->
-    {% else %}
-    <li class="disabled">
-      <span>
-        <span aria-hidden="true">&hellip;</span>
-      </span>
+    <!--previous symbol-->
+    <li {% if not pagination.has_prev %} class="disabled"{% endif %} >
+        <a href="{% if pagination.has_prev %}{{ url_for(endpoint,
+        page=pagination.prev_num, **kwargs) }}{% else %}#{% endif %}">
+            &laquo;
+        </a>
     </li>
-    {% endif %}
-  {% endfor %}
-  <!--next symbol-->
-  <li>
-    <a href="#" aria-label="Next">
-      <span aria-hidden="true">&raquo;</span>
-    </a>
-  </li>
+    {% for page in pagination.iter_pages() %}
+	    {% if page %}
+            {% if page == pagination.page %}
+            <li class="active">
+                <a href="{{ url_for(endpoint, page=page, **kwargs) }}">{{ page }}</a>
+            </li>
+            {% else %}
+            <li>
+                <a href="{{ url_for(endpoint, page=page, **kwargs) }}">{{ page }}</a>
+            </li>
+            {% endif %}
+	    {% else %}
+        <li class="disabled">
+          <span>
+            <span aria-hidden="true">&hellip;</span>
+          </span>
+        </li>
+	    {% endif %}
+    {% endfor %}
+    <li{% if not pagination.has_next %} class="disabled"{% endif %}>
+        <a href="{% if pagination.has_next %}{{ url_for(endpoint,
+        page=pagination.next_num, **kwargs) }}{% else %}#{% endif %}">
+            &raquo;
+        </a>
+    </li>
 </ul>
 {% endmacro %}
