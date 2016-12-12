@@ -1,7 +1,28 @@
 {% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
 
 {% block title %}Flasky post{% endblock %}
 
 {% block page_content %}
 {% include('_posts.html') %}
+<div class="comment-form">
+    <h3 id="comments">Comments</h3>
+    <h4>
+        Enter your comment
+        {{ wtf.quick_form(form) }}
+    </h4>
+</div>
+{% include('_comments.html') %}
+{% if pagination %}
+<div class="pagination">
+    {{ macros.render_pagination(pagination, '.post', id=posts[0].id,
+    fragment='#comments') }}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{{ pagedown.include_pagedown() }}
 {% endblock %}

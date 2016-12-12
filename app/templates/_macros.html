@@ -1,8 +1,4 @@
-{% macro render_comment(comment) %}
-	<li>{{ comment }}</li>
-{% endmacro %}
-
-{% macro render_pagination(pagination, endpoint) %}
+{% macro render_pagination(pagination, endpoint, fragment='') %}
 <ul class=pagination>
     <!--previous symbol-->
     <li {% if not pagination.has_prev %} class="disabled"{% endif %} >
@@ -15,11 +11,15 @@
 	    {% if page %}
             {% if page == pagination.page %}
             <li class="active">
-                <a href="{{ url_for(endpoint, page=page, **kwargs) }}">{{ page }}</a>
+                <a href="{{ url_for(endpoint, page=page, **kwargs) }}
+                {{ fragment }}">{{ page }}
+                </a>
             </li>
             {% else %}
             <li>
-                <a href="{{ url_for(endpoint, page=page, **kwargs) }}">{{ page }}</a>
+                <a href="{{ url_for(endpoint, page=page, **kwargs) }}
+                {{ fragment }}">{{ page }}
+                </a>
             </li>
             {% endif %}
 	    {% else %}

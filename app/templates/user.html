@@ -68,7 +68,10 @@
     </div>
     <div>
         <h2>Posts by {{ user.username }}</h2>
-        {% include('_posts.html') %}
+        <ul class="posts">
+            {% include('_posts.html') %}
+        </ul>
+
     </div>
 </div>
 {% endblock %}

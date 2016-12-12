@@ -2,16 +2,16 @@ import os
 
 from datetime import datetime
 
-from flask import flash
-from flask import render_template, session, redirect, url_for, current_app, \
-    abort, request
+import math
+from flask import render_template, redirect, url_for, current_app, \
+    abort, request, make_response, flash
 from flask_login import current_user, login_required
 
 from app.decorators import admin_required, permission_required
 from . import main
-from .forms import NameForm, EditProfileForm, EditProfileAdminForm, PostForm
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm, CommentForm
 from .. import db
-from ..models import User, Permission, Role, Post
+from ..models import User, Permission, Role, Post, Comment
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -25,14 +25,22 @@ def index():
                     author=current_user._get_current_object())
         db.session.add(post)
         return redirect(url_for('.index'))
-
     page = request.args.get('page', type=int, default=1)
-    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
-        page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'], error_out=False)
+    show_followed = False
+    if current_user.is_authenticated:
+        show_followed = bool(request.cookies.get('show_followed', ''))
+    if show_followed:
+        query = current_user.followed_posts
+        print('got here')
+        print(query)
+    else:
+        query = Post.query
+    pagination = query.order_by(Post.timestamp.desc()).paginate(
+        page=page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+        error_out=False)
     posts = pagination.items
-
     return render_template('index.html', form=form, posts=posts,
-                           pagination=pagination)
+                           show_followed=show_followed, pagination=pagination)
 
 
 @main.route('/admin')
@@ -102,11 +110,30 @@ def edit_profile_admin(id):
     return render_template('edit_profile.html', form=form, user=user)
 
 
-@main.route('/post/<int:id>')
+@main.route('/post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def post(id):
+    """ permalink location of single post with comments
+    """
     post = Post.query.get_or_404(id)
-    return render_template('post.html', posts=[post])
+    form = CommentForm()
+    if current_user.can(Permission.COMMENT) and form.validate_on_submit():
+        comment = Comment(body=form.body.data, disabled=False,
+                          author=current_user._get_current_object(), post=post)
+        db.session.add(comment)
+        db.session.commit()
+        flash('Your comment has been published')
+        return redirect(url_for('.post', id=post.id, page=-1))
+    page = request.args.get('page', type=int, default=1)
+    if page == -1:
+        page = math.ceil((post.comments.count()) / current_app.config[
+            'FLASKY_COMMENTS_PER_PAGE'])
+    pagination = Comment.query.order_by(Comment.timestamp.asc()).paginate(
+        page=page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
+        error_out=False)
+    comments = pagination.items
+    return render_template('post.html', posts=[post], form=form,
+                           comments=comments, pagination=pagination)
 
 
 @main.route('/edit/<int:id>', methods=['GET', 'POST'])
@@ -170,7 +197,7 @@ def followers(username):
     pagination = user.followers.paginate(
         page=page, per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'],
         error_out=False)
-    followers = [{'user':item.follower, 'timestamp': item.timestamp} for
+    followers = [{'user': item.follower, 'timestamp': item.timestamp} for
                  item in pagination.items]
     return render_template('followers.html', user=user, title="Followers of",
                            endpoint='.followers', pagination=pagination,
@@ -194,3 +221,53 @@ def followed_by(username):
     return render_template('followers.html', user=user, title="Followed by",
                            endpoint='.followed_by', pagination=pagination,
                            follows=followed)
+
+
+@main.route('/all')
+@login_required
+def show_all():
+    resp = make_response(redirect(url_for('.index')))
+    resp.set_cookie('show_followed', '', max_age=30*24*60*60)
+    return resp
+
+
+@main.route('/followed')
+@login_required
+def show_followed():
+    resp = make_response(redirect(url_for('.index')))
+    resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
+    return resp
+
+
+@main.route('/moderate')
+@login_required
+def moderate():
+    page = request.args.get('page', 1, type=int)
+    pagination = Comment.query.order_by(Comment.timestamp.desc()).paginate(
+        page=page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
+        error_out=False)
+    comments = pagination.items
+    return render_template('moderate.html', comments=comments,
+                           pagination=pagination, page=page)
+
+
+@main.route('/moderate/enable/<int:id>')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate_enable(id):
+    comment = Comment.query.get_or_404(id)
+    comment.disabled = False
+    db.session.add(comment)
+    return redirect(url_for('.moderate', moderate=True))
+
+
+@main.route('/moderate/disable/<int:id>')
+@login_required
+@permission_required(Permission.MODERATE_COMMENTS)
+def moderate_disable(id):
+    comment = Comment.query.get_or_404(id)
+    comment.disabled = True
+    db.session.add(comment)
+    return redirect(url_for('.moderate', moderate=True))
+
+
