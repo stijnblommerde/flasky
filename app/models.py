@@ -299,6 +299,7 @@ class User(db.Model, UserMixin):
         }
         return json_user
 
+
 class AnonymousUser(AnonymousUserMixin):
     """ Anonymous User has not verified the account yet,
     but is able to login and view a single page

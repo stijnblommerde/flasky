@@ -9,3 +9,4 @@ def get_user(id):
     user = User.query.get_or_404(id)
     return jsonify(user.to_json())
 
+
