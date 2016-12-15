@@ -1,8 +1,10 @@
+import re
 import unittest
 
 from flask import url_for
 
 from app import create_app, db
+from app.models import Role, User
 
 
 class FlaskClientTestCase(unittest.TestCase):
@@ -27,6 +29,32 @@ class FlaskClientTestCase(unittest.TestCase):
     def test_register_and_login(self):
         # register a new account
         response = self.client.post(url_for('auth.register'), data={
-            'email': 'stijnblommerde@gmail.com',
-            'username': ''
+            'email': 'stijnblommerde@example.com',
+            'username': 'stijn',
+            'password': 'test',
+            'confirm_password': 'test',
         })
+        self.assertTrue(response.status_code == 302)
+
+        # login with the new account
+        response = self.client.post(url_for('auth.login'), data={
+            'email': 'stijnblommerde@example.com',
+            'password': 'test',
+        }, follow_redirects=True)
+        data = response.get_data(as_text=True)
+        self.assertTrue(re.search('Hello,\s+stijn', data))
+        self.assertTrue('You have not confirmed your account yet' in data)
+
+        # send a confirmation token
+        user = User.query.filter_by(email='stijnblommerde@example.com').first()
+        token = user.generate_confirmation_token()
+        response = self.client.get(url_for('auth.confirm', token=token),
+                                    follow_redirects=True)
+        data = response.get_data(as_text=True)
+        self.assertTrue('You have confirmed your account' in data)
+
+        # log out
+        response = self.client.get(url_for('auth.logout'),
+                                   follow_redirects=True)
+        data = response.get_data(as_text=True)
+        self.assertTrue('You have been logged out' in data)

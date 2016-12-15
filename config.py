@@ -44,6 +44,7 @@ class TestingConfig(Config):
     # disable CSRF tokens in tests
     WTF_CSRF_ENABLED = False
 
+
 class ProductionConfig(Config):
     PRODUCTION = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \

@@ -269,5 +269,3 @@ def moderate_disable(id):
     comment.disabled = True
     db.session.add(comment)
     return redirect(url_for('.moderate', moderate=True))
-
-
