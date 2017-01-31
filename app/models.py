@@ -68,7 +68,8 @@ class Follow(db.Model):
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
-    # columns
+    # columns    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
     email = db.Column(db.String(64), unique=True, index=True)
@@ -78,7 +79,6 @@ class User(db.Model, UserMixin):
     location = db.Column(db.String(64))
     about_me = db.Column(db.Text())
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
-    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
     avatar_hash = db.Column(db.String(32))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
