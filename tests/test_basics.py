@@ -27,14 +27,14 @@ class BasicsTestCase(unittest.TestCase):
 
     def test_no_password_getter(self):
         stijn = User(password='Kobus1hs')
-        with self.assertRaises(AttributeError):
-            stijn.password
+        # with self.assertRaises(AttributeError):
+        #     stijn.password
 
         # more verbose version
-        # try:
-        #     stijn.password
-        # except AttributeError:
-        #     self.assertRaises(AttributeError)
+        try:
+            stijn.password
+        except AttributeError:
+            self.assertRaises(AttributeError)
 
     def test_password_verification(self):
         stijn = User(password='Kobus1hs')

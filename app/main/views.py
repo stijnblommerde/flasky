@@ -31,8 +31,6 @@ def index():
         show_followed = bool(request.cookies.get('show_followed', ''))
     if show_followed:
         query = current_user.followed_posts
-        print('got here')
-        print(query)
     else:
         query = Post.query
     pagination = query.order_by(Post.timestamp.desc()).paginate(
