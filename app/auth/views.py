@@ -143,7 +143,7 @@ def password_reset(token):
         user = User.query.filter_by(email=form.email.data).first()
         if user is None:
             return redirect(url_for('main.index'))
-        if user.reset_password(token, form.password.data):
+        if user.reset_password(token, form.new_password.data):
             db.session.add(user)
             flash('Password has been reset')
             return redirect(url_for('auth.login'))

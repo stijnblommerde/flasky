@@ -4,27 +4,29 @@ from .errors import unauthorized, forbidden
 from ..models import AnonymousUser, User
 from . import api
 
-print('test authentication v2')
-
 auth = HTTPBasicAuth()
 
 
 @api.before_request
 @auth.login_required
 def before_request():
+    """ protect all endpoints from logging in anonymously or unconfirmed
+    :return:
+    """
     if not g.current_user.is_anonymous and \
             not g.current_user.confirmed:
         return forbidden('Unconfirmed account')
 
 
 @auth.verify_password
-def verify(email_or_token, password):
+def verify_password(email_or_token, password):
+    """ callback for flask_httpauth, called after @auth.login_required
     """
-    """
-    # possibility to login anonymously
+    # login anonymously (without email, password or token)
     if email_or_token == '':
         g.current_user = AnonymousUser()
         return True
+    # login with token
     if password == '':
         g.current_user = User.verify_auth_token(email_or_token)
         g.token_used = True
@@ -33,6 +35,7 @@ def verify(email_or_token, password):
     if not user:
         return False
     g.current_user = user
+    g.token_used = False
     return user.verify_password(password)
 
 
@@ -43,5 +46,11 @@ def auth_error():
 
 @api.route('/token')
 def get_token():
-    pass
+    print('token used:', g.token_used)
+    if g.current_user.is_anonymous or g.token_used:
+        return unauthorized('Invalid credentials')
+    print('token:',g.current_user.generate_auth_token(expiration=3600))
+    print('type:', type(g.current_user.generate_auth_token(expiration=3600)))
+    return jsonify({'token': g.current_user.generate_auth_token(
+        expiration=3600), 'expiration': 3600})
 

@@ -1,4 +1,6 @@
 from flask import jsonify
+from app.exceptions import ValidationError
+from . import api
 
 
 def bad_request(message):
@@ -23,3 +25,8 @@ def method_not_allowed(message):
     response = jsonify({'error': 'method not allowed', 'message': message})
     response.status_code = 405
     return response
+
+
+@api.errorhandler(ValidationError)
+def validation_error(e):
+    return bad_request(e.args[0])

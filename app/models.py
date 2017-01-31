@@ -9,6 +9,7 @@ from markdown import markdown
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.contrib.cache import SimpleCache
 from . import login_manager, db
+from app.exceptions import ValidationError
 
 cache = SimpleCache()
 
@@ -96,6 +97,25 @@ class User(db.Model, UserMixin):
                                 cascade='all, delete-orphan')
     comments = db.relation('Comment', backref='author', lazy='dynamic')
 
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+        if self.role is None:
+            if self.email == current_app.config['FLASKY_ADMIN']:
+                self.role = Role.query.filter_by(permissions=0xff).first()
+            else:
+                self.role = Role.query.filter_by(default=True).first()
+
+        if self.email is not None and self.avatar_hash is None:
+            self.avatar_hash = hashlib.md5(
+            self.email.encode('utf-8')).hexdigest()
+
+    def __repr__(self):
+        return '<User %r>' % self.username
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+
     @staticmethod
     def generate_fake(count=100):
         from sqlalchemy.exc import IntegrityError
@@ -117,22 +137,6 @@ class User(db.Model, UserMixin):
                 db.session.commit()
             except IntegrityError:
                 db.session.rollback()
-
-    def __init__(self, **kwargs):
-        super(User, self).__init__(**kwargs)
-        if self.role is None:
-            if self.email == current_app.config['FLASKY_ADMIN']:
-                self.role = Role.query.filter_by(permissions=0xff).first()
-            else:
-                self.role = Role.query.filter_by(default=True).first()
-
-        if self.email is not None and self.avatar_hash is None:
-            self.avatar_hash = hashlib.md5(
-            self.email.encode('utf-8')).hexdigest()
-
-    @property
-    def password(self):
-        raise AttributeError('password is not a readable attribute')
 
     @password.setter
     def password(self, password):
@@ -284,9 +288,6 @@ class User(db.Model, UserMixin):
         return Post.query.join(Follow, Follow.followed_id == Post.author_id) \
             .filter(Follow.follower_id == self.id)
 
-    def __repr__(self):
-        return '<User %r>' % self.username
-
     def to_json(self):
         json_user = {
             'url': url_for('api.get_user', id=self.id, _external=True),
@@ -298,6 +299,19 @@ class User(db.Model, UserMixin):
                                       id=self.id, _external=True)
         }
         return json_user
+
+    def generate_auth_token(self, expiration):
+        s = Serializer(current_app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'id': self.id}).decode('ascii')
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return None
+        return User.query.get(data['id'])
 
 
 class AnonymousUser(AnonymousUserMixin):
@@ -361,6 +375,13 @@ class Post(db.Model):
             'comment_count': self.comments.count()
         }
         return json_post
+
+    @staticmethod
+    def from_json(json_post):
+        body = json_post.get('body')
+        if body is None or body == '':
+            return ValidationError('post does not have a body')
+        return Post(body=body)
 
 db.event.listen(Post.body, 'set', Post.on_change_body)
 

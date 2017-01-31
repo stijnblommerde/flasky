@@ -1,7 +1,3 @@
-import os
-
-from datetime import datetime
-
 import math
 from flask import render_template, redirect, url_for, current_app, \
     abort, request, make_response, flash
