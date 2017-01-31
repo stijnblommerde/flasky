@@ -4,6 +4,8 @@ from .errors import unauthorized, forbidden
 from ..models import AnonymousUser, User
 from . import api
 
+print('test authentication v2')
+
 auth = HTTPBasicAuth()
 
 
@@ -11,7 +13,7 @@ auth = HTTPBasicAuth()
 @auth.login_required
 def before_request():
     if not g.current_user.is_anonymous and \
-            not g.current_user.cofirmed:
+            not g.current_user.confirmed:
         return forbidden('Unconfirmed account')
 
 
